@@ -162,7 +162,7 @@ class Students(Resource):
         return students
     
 
-    @api.marshal_with(student_model, code= 201, envelope='students')
+    @api.marshal_with(student_model, code= 201, envelope='student')
     def post(self):
         ''' Create a new student account '''
         data = request.get_json()
@@ -177,28 +177,36 @@ class Students(Resource):
         return new_student
 
 
-        return {'message': 'You have successfully created an account'}
-    
-
-
 
 @api.route('/student/<int:id>')
 class singleStudent(Resource):
+    @api.marshal_with(student_model, code= 200, envelope='student')
     def get(self, id):
         ''' Get A student by ID '''
-        return {'message': 'this is one student'}
+        student = Student.query.get_or_404(id)
+        return student, 200
     
+    @api.marshal_with(student_model, code= 200, envelope='student')
     def put(self, id):
         ''' Update all the information about a student account/datails '''
-        return {'message': 'You have successfully updated your details'}
+        studentToUpdate = Student.query.get_or_404(id)
+        data = request.get_json()
+        studentToUpdate.name = data.get('name')
+        studentToUpdate.email = data.get('email')
+        studentToUpdate.matric_No = data.get('matric_No')
+        studentToUpdate.course = data.get('course')
+        db.session.commit()
+        return studentToUpdate
     
-    def patch(self, id):
-        ''' Update some of the student account/datails '''
-        return {'message': 'You have successfully updated  some of your your details'}
     
+    
+    @api.marshal_with(student_model, code= 200, envelope='student_deleted')
     def delete(self, id):
-        ''' Delete a student account/datails '''
-        return {'message': 'You have successfully deleted your details'}
+        ''' Delete a student account/datails/record '''
+        studentToDelete = Student.query.get_or_404(id)
+        db.session.delete(studentToDelete)
+        db.session.commit()
+        return {'message': 'This student record has been deleted'}, 200
 
 # End of Routes
 
