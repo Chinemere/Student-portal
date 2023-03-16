@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 from flask_restx import Api, Resource, fields
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_migrate import Migrate
 
 basedir = os.path.dirname(os.path.realpath(__file__))
 app=Flask(__name__)
@@ -20,8 +20,14 @@ load_dotenv()
 
 api = Api(app)
 db=SQLAlchemy(app)
+migrate= Migrate(app, db)
 
 
+
+
+def gp( testScore1, attendanceScore1, assignmentScore1, examScore1):
+    aggregate = testScore1 + attendanceScore1 + assignmentScore1 + examScore1
+    return aggregate
 
 
 # Beginning of the Model section
@@ -66,24 +72,18 @@ class Teacher(db.Model):
         return self.name
 
 
-class Courses(db.Model):
-    __tablename__ = "courses"
+class CourseTrack(db.Model):
+    __tablename__ = "course_track"
     id = db.Column(db.Integer(), primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
     teacher = db.Column(db.String(200), nullable=False)
 
     def __repr__(self):
         return self.title 
-    
-
-
-
 
 
 
 # model serialisation 
-
-
 student_model = api.model(
     'Student', {
         'id': fields.Integer(),
@@ -120,8 +120,8 @@ teacher_model = api.model(
     }
 )
 
-courses_model = api.model(
-    'Courses', {
+track_model = api.model(
+    'CourseTrack', {
         'id': fields.Integer(),
         'title': fields.String(),
         'teacher': fields.String(),
@@ -138,7 +138,7 @@ def make_shell_context():
         "Student":Student,
         "StudentResult":StudentResult,
         "Teacher": Teacher,
-        "Courses": Courses,
+        "Track": Track
         }
 
 
@@ -146,7 +146,12 @@ def make_shell_context():
 
 # End of the Model section
     
+@api.route("/test")
+class Test(Resource):
+    def get(self):
 
+        track = db.session.query(Track).all()
+        return {"msg": f"{track}"}
 
 
 
@@ -170,7 +175,6 @@ class Students(Resource):
         email= data.get('email')
         matric_No = data.get('matric_No')
         course = data.get('course')
-
         new_student = Student(name=name, email=email, matric_No=matric_No, course=course)
         db.session.add(new_student)
         db.session.commit()
@@ -262,7 +266,144 @@ class singleTeacher(Resource):
         db.session.delete(teacherToUpdate)
         db.session.commit()
         return {'message': 'This teacher record has been deleted'}, 200
+    
 
+
+#Track routes
+@api.route('/tracks')
+class Track(Resource):
+    @api.marshal_with(track_model, code= 200, envelope='tracks')
+    def get(self):
+        
+        ''' Get all tracks '''
+        track = CourseTrack.query.all()
+        return track
+
+
+
+    @api.marshal_with(track_model, code= 201, envelope='track')
+    def post(self):
+        ''' Create a new track '''
+        data = request.get_json()
+        title = data.get('title')
+        teacher= data.get('teacher')
+
+        new_track = CourseTrack(title=title, teacher = teacher)
+        db.session.add(new_track)
+        db.session.commit()
+        return new_track
+  
+    
+    #get Track by id
+@api.route('/tracks/<int:id>')
+class Track(Resource):
+    @api.marshal_with(track_model, code= 200, envelope='tracks')
+    def get(self, id):
+        ''' Get one  track by id '''
+        track = CourseTrack.query.get_or_404(id)
+        return track
+
+
+    @api.marshal_with(track_model, code= 200, envelope='track')
+    def put(self, id):
+        ''' Update all the information about a track '''
+        TrackToUpdate = CourseTrack.query.get_or_404(id)
+        data = request.get_json()
+        TrackToUpdate.title = data.get('title')
+        TrackToUpdate.teacher = data.get('teacher')
+        db.session.commit()
+        return TrackToUpdate
+    
+    @api.marshal_with(track_model, code= 200, envelope='track_deleted')
+    def delete(self, id):
+        ''' Delete a track '''
+        TrackToUpdate = CourseTrack.query.get_or_404(id)
+        db.session.delete(TrackToUpdate)
+        db.session.commit()
+        return {'message': 'This Track has been deleted'}, 200
+    
+
+
+
+
+
+#Routs to get each student scores
+@api.route('/results')
+class StudentResults(Resource):
+    @api.marshal_list_with(studentResult_model, code= 200, envelope='studentScores')
+    def get(self):
+        ''' Get all student Results '''
+        studentResults = StudentResult.query.all()
+        return studentResults
+            
+
+
+    @api.marshal_with(studentResult_model, code= 201, envelope='studentScores')
+    def post(self):
+        ''' Create/insert a new student result '''
+        data = request.get_json()
+        name = data.get('name')
+        email = data.get('email')
+        matric_No = data.get('matric_No')
+        course = data.get('course')
+        testScore= data.get('testScore')
+        attendanceScore = data.get('attendanceScore')
+        assignmentScore = data.get('assignmentScore')
+        examScore = data.get('examScore')
+        cGPA = gp(testScore, attendanceScore, assignmentScore, examScore)
+        new_Result = StudentResult(
+            name=name, email=email, matric_No=matric_No, 
+            course=course,
+            testScore=testScore, 
+            attendanceScore=attendanceScore,
+            assignmentScore = assignmentScore, 
+            examScore = examScore,
+            cGPA = cGPA
+            )
+        db.session.add(new_Result)
+        db.session.commit()
+        return new_Result
+
+@api.route('/results/<int:id>')  
+class singleStudentResult(Resource):    
+    @api.marshal_with(studentResult_model, code= 201, envelope='studentScores')
+    def get(self, id):
+        ''' Get a student by id'''
+        studentResults = StudentResult.query.get_or_404(id)
+        return studentResults
+
+
+    @api.marshal_with(studentResult_model, code= 200, envelope='track')
+    def put(self, id):
+        ''' Update all the information about a student result '''
+        resultToUpdate = StudentResult.query.get_or_404(id)
+        data = request.get_json()
+        resultToUpdate.name = data.get('name')
+        resultToUpdate.email = data.get('email')
+        resultToUpdate.matric_No = data.get('matric_No')
+        resultToUpdate.course = data.get('course')
+        resultToUpdate.testScore = data.get('testScore')
+        resultToUpdate.attendanceScore = data.get('attendanceScore')
+        resultToUpdate.assignmentScore = data.get('assignmentScore')
+        resultToUpdate.examScore = data.get('examScore')
+        resultToUpdate.cGPA = gp(
+            resultToUpdate.testScore, 
+            resultToUpdate.attendanceScore, 
+            resultToUpdate.assignmentScore,  
+            resultToUpdate.examScore
+            )
+        db.session.commit()
+        return resultToUpdate
+    
+    
+    @api.marshal_with(track_model, code= 200, envelope='result_Deleted')
+    def delete(self, id):
+        ''' Delete a student Result '''
+        resultToDelete = StudentResult.query.get_or_404(id)
+        db.session.delete(resultToDelete)
+        db.session.commit()
+        return {'message': 'This student result has been deleted'}, 200
+    
 
 
 
