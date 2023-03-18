@@ -3,14 +3,14 @@ from flask import request
 from flask_restx import  Resource, Namespace, fields
 from api.models import CourseTrack
 
-courses_namespace = Namespace('courses', description='namespace for courses')
+courses_namespace = Namespace('Courses', description='namespace for courses', path="/courses")
 
 
 track_model = courses_namespace.model(
     'CourseTrack', {
         'id': fields.Integer(),
         'title': fields.String(),
-        'teacher': fields.String(),
+        'teacher_id': fields.String(),
     }
 )
 
@@ -32,11 +32,11 @@ class CreateGetTracks(Resource):
         ''' Create a new track '''
         data = request.get_json()
         title = data.get('title')
-        teacher= data.get('teacher')
+        teacher= data.get('teacher_id')
 
         new_track = CourseTrack(title=title, teacher = teacher)
         new_track.save()
-        
+
         return new_track, HTTPStatus.CREATED
   
     

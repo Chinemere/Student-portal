@@ -6,7 +6,7 @@ from flask_restx import Resource, abort, fields, Namespace
 from .models import User, Student, Teacher
 from werkzeug.security import generate_password_hash, check_password_hash
 
-auth_namespace = Namespace('auth', description='namespace for authentication', path='/auth')
+auth_namespace = Namespace('Auth', description='namespace for authentication', path='/auth')
 
 login_model = auth_namespace.model(
     'Login', {
@@ -35,7 +35,7 @@ class SignUp(Resource) :
     @auth_namespace.expect(user_model)
     @auth_namespace.doc(params={'name': "Your Name", 'email':'Your email', "username": "Your Username", "password": "Your Password"})
     def post(self):
-        ''' Create an account'''
+        ''' Create an account (Student and Teacher)'''
         data = request.get_json()
 
         name = data.get('name')

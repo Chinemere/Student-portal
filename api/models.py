@@ -62,14 +62,14 @@ class StudentResult(db.Model):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False)
     matric_No = db.Column(db.Integer(), nullable=False)
-    course = db.Column(db.String(200), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey("students.id"))
+    course_id = db.Column(db.Integer, db.ForeignKey("course_tracks.id"))
+    course_name = db.Column(db.String(200), nullable=False)
     testScore = db.Column(db.Integer(), nullable=False)
     attendanceScore = db.Column(db.Integer(), nullable=False)
     assignmentScore = db.Column(db.Integer(), nullable=False)
     examScore = db.Column(db.Integer(), nullable=False)
-    cGPA = db.Column(db.Integer())
-
-    student_id = db.Column(db.Integer, db.ForeignKey("students.id"))
+    cGPA = db.Column(db.Integer(), nullable=True)
 
     def __repr__(self):
         return self.name 
@@ -114,9 +114,10 @@ class CourseTrack(db.Model):
     __tablename__ = "course_tracks"
     id = db.Column(db.Integer(), primary_key=True)
     title = db.Column(db.String(300), nullable=False)
-
     teacher_id = db.Column(db.ForeignKey("teachers.id"))
+    
     students = db.relationship("Student", backref="course")
+    student_results = db.relationship("StudentResult", backref="course")
 
     def __repr__(self):
         return self.title 
