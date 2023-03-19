@@ -1,4 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
+from decouple import config
+from werkzeug.security import generate_password_hash
 
 db=SQLAlchemy()
 
@@ -11,6 +13,7 @@ class User(db.Model):
     username = db.Column(db.String(200), unique=True, nullable=False)
     passwordHash = db.Column(db.Text(), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
     students = db.relationship("Student", backref="user_student")
     teachers = db.relationship("Teacher", backref="user_teacher")
@@ -32,7 +35,7 @@ class Student(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
-    matric_No = db.Column(db.Integer(), unique=True, nullable=True)
+    matric_No = db.Column(db.String(10), unique=True, nullable=True)
 
     course_id = db.Column(db.ForeignKey("course_tracks.id"))
     user_id = db.Column(db.ForeignKey("users.id"))
@@ -65,10 +68,10 @@ class StudentResult(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey("students.id"))
     course_id = db.Column(db.Integer, db.ForeignKey("course_tracks.id"))
     course_name = db.Column(db.String(200), nullable=False)
-    testScore = db.Column(db.Integer(), nullable=False)
-    attendanceScore = db.Column(db.Integer(), nullable=False)
-    assignmentScore = db.Column(db.Integer(), nullable=False)
-    examScore = db.Column(db.Integer(), nullable=False)
+    testScore = db.Column(db.Integer(), default=0)
+    attendanceScore = db.Column(db.Integer(), default=0)
+    assignmentScore = db.Column(db.Integer(), default=0)
+    examScore = db.Column(db.Integer(), default=0)
     cGPA = db.Column(db.Integer(), nullable=True)
 
     def __repr__(self):
@@ -137,3 +140,13 @@ class CourseTrack(db.Model):
 def db_drop_create_all():
     db.drop_all()
     db.create_all()
+
+    admin = User(
+        name="Admin",
+        username="admin",
+        email="admin@mail.com",
+        passwordHash=generate_password_hash(config("DEFAULT_ADMIN_PASSWORD")),
+        user_type="admin",
+        is_admin=True
+    )
+    admin.save()

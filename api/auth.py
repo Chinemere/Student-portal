@@ -34,36 +34,40 @@ class SignUp(Resource) :
     @auth_namespace.marshal_with(user_model, code= 200, envelope='new users')
     @auth_namespace.expect(user_model)
     @auth_namespace.doc(params={'name': "Your Name", 'email':'Your email', "username": "Your Username", "password": "Your Password"})
+    @jwt_required()
     def post(self):
         ''' Create an account (Student and Teacher)'''
-        data = request.get_json()
+        current_user = User.query.filter_by(username=get_jwt_identity()).first()
+        if current_user.is_admin:
+            data = request.get_json()
 
-        name = data.get('name')
-        email = data.get('email')
-        username = data.get('username')
-        password = data.get('password')
-        user_type = data.get("user_type")
+            name = data.get('name')
+            email = data.get('email')
+            username = data.get('username')
+            password = data.get('password')
+            user_type = data.get("user_type")
 
-        email_exist = User.query.filter_by(email=email).first()
-        username_exist = User.query.filter_by(username=username).first()
+            email_exist = User.query.filter_by(email=email).first()
+            username_exist = User.query.filter_by(username=username).first()
 
-        if email_exist:
-            abort(HTTPStatus.CONFLICT, "Email already exist")
-        elif username_exist:
-            abort(HTTPStatus.CONFLICT, "Username already exist")
-        else:
-            new_user = User(name=name, email=email, username=username, user_type=user_type, passwordHash=generate_password_hash(password))
-            new_user.save()
-            if user_type == "student":
-                new_student =  Student(name=name, email=email, user_id=new_user.id)
-                new_student.save()
-                new_student.matric_No = new_student.generate_matric(new_student.id)
-                new_student.update()
-            elif user_type == "teacher":
-                new_teacher = Teacher(name=name, email=email, user_id=new_user.id)
-                new_teacher.save()
-            
-            return new_user, HTTPStatus.CREATED
+            if email_exist:
+                abort(HTTPStatus.CONFLICT, "Email already exist")
+            elif username_exist:
+                abort(HTTPStatus.CONFLICT, "Username already exist")
+            else:
+                new_user = User(name=name, email=email, username=username, user_type=user_type, passwordHash=generate_password_hash(password))
+                new_user.save()
+                if user_type == "student":
+                    new_student =  Student(name=name, email=email, user_id=new_user.id)
+                    new_student.save()
+                    new_student.matric_No = new_student.generate_matric(new_student.id)
+                    new_student.update()
+                elif user_type == "teacher":
+                    new_teacher = Teacher(name=name, email=email, user_id=new_user.id)
+                    new_teacher.save()
+                
+                return new_user, HTTPStatus.CREATED
+        abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
             
 
 #Login Routes
