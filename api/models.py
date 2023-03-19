@@ -13,7 +13,7 @@ class User(db.Model):
     user_type = db.Column(db.String(50), nullable=False)
 
     students = db.relationship("Student", backref="user_student")
-    teachers = db.relationship("Student", backref="user_teacher")
+    teachers = db.relationship("Teacher", backref="user_teacher")
 
     def save(self):
         db.session.add(self)
