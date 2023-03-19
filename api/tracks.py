@@ -55,17 +55,17 @@ class Track(Resource):
         ''' Update all the information about a track '''
         TrackToUpdate = CourseTrack.query.get_or_404(id)
         data = request.get_json()
+
         TrackToUpdate.title = data.get('title')
         TrackToUpdate.teacher = data.get('teacher')
-        db.session.commit()
+        TrackToUpdate.update()
         return TrackToUpdate
     
     @courses_namespace.marshal_with(track_model, code= 200, envelope='track_deleted')
     def delete(self, id):
         ''' Delete a track '''
         TrackToUpdate = CourseTrack.query.get_or_404(id)
-        db.session.delete(TrackToUpdate)
-        db.session.commit()
+        TrackToUpdate.delete()
         return {'message': 'This Track has been deleted'}, 200
     
 
