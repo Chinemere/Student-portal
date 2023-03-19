@@ -1,5 +1,4 @@
-
-from .api import create_app
+from api import create_app
 from .api.config import config_dict
 
 app = create_app(config_dict["prod"])
