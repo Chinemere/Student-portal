@@ -11,7 +11,7 @@ auth_namespace = Namespace('Auth', description='namespace for authentication', p
 login_model = auth_namespace.model(
     'Login', {
     "email":fields.String(required=True, description="Email of user"),
-    "passwordHash":fields.String( required=True, description="A Password")
+    "password_hash":fields.String( required=True, description="A Password")
 
     }
 )
@@ -52,7 +52,7 @@ class SignUp(Resource) :
         elif username_exist:
             abort(HTTPStatus.CONFLICT, "Username already exist")
         else:
-            new_user = User(name=name, email=email, username=username, user_type=user_type, passwordHash=generate_password_hash(password))
+            new_user = User(name=name, email=email, username=username, user_type=user_type, password_hash=generate_password_hash(password))
             new_user.save()
             if user_type == "student":
                 new_student =  Student(name=name, email=email, user_id=new_user.id)
@@ -78,7 +78,7 @@ class Login(Resource) :
         email = data.get('email')
         password =data.get('password')
         users = User.query.filter_by(email=email).first()
-        if (users is not None) and check_password_hash(users.passwordHash, password):
+        if (users is not None) and check_password_hash(users.password_hash, password):
             access_token= create_access_token(identity =users.username)
             refresh_token = create_refresh_token(identity =users.username)
 

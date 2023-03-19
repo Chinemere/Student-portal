@@ -9,7 +9,7 @@ class User(db.Model):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
     username = db.Column(db.String(200), unique=True, nullable=False)
-    passwordHash = db.Column(db.Text(200), nullable=False)
+    password_hash = db.Column(db.Text(200), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
 
     students = db.relationship("Student", backref="user_student")
