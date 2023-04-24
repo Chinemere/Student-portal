@@ -1,8 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
-from decouple import config
+from .utils import db
 from werkzeug.security import generate_password_hash
 
-db=SQLAlchemy()
 
 # Beginning of the Model section
 class User(db.Model):
@@ -13,7 +11,7 @@ class User(db.Model):
     username = db.Column(db.String(200), unique=True, nullable=False)
     passwordHash = db.Column(db.Text(), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
+    # is_admin = db.Column(db.Boolean, default=False)
 
     students = db.relationship("Student", backref="user_student")
     teachers = db.relationship("Teacher", backref="user_teacher")
@@ -28,6 +26,10 @@ class User(db.Model):
     
     def update(self):
         db.session.commit()
+    
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)
 
 
 class Student(db.Model):
@@ -35,8 +37,6 @@ class Student(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
-    matric_No = db.Column(db.String(10), unique=True, nullable=True)
-
     course_id = db.Column(db.ForeignKey("course_tracks.id"))
     user_id = db.Column(db.ForeignKey("users.id"))
     student_results = db.relationship("StudentResult", backref="student")
@@ -58,13 +58,16 @@ class Student(db.Model):
     def update(self):
         db.session.commit()
     
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)
 
 class StudentResult(db.Model):
     __tablename__ = "student_results"
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False)
-    matric_No = db.Column(db.Integer(), nullable=False)
+    passwordhash =db.Column(db.String(200), nullable=False) 
     student_id = db.Column(db.Integer, db.ForeignKey("students.id"))
     course_id = db.Column(db.Integer, db.ForeignKey("course_tracks.id"))
     course_name = db.Column(db.String(200), nullable=False)
@@ -94,7 +97,6 @@ class Teacher(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
-
     user_id = db.Column(db.ForeignKey("users.id"))
     course = db.relationship("CourseTrack", backref="teacher")
 
@@ -111,6 +113,10 @@ class Teacher(db.Model):
     
     def update(self):
         db.session.commit()
+    
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)
 
 
 class CourseTrack(db.Model):
@@ -136,17 +142,6 @@ class CourseTrack(db.Model):
     def update(self):
         db.session.commit()
 
-
-def db_drop_create_all():
-    db.drop_all()
-    db.create_all()
-
-    admin = User(
-        name="Admin",
-        username="admin",
-        email="admin@mail.com",
-        passwordHash=generate_password_hash(config("DEFAULT_ADMIN_PASSWORD")),
-        user_type="admin",
-        is_admin=True
-    )
-    admin.save()
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)

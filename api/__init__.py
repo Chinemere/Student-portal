@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_restx import Api
-from .models import db, Student, Teacher, StudentResult, CourseTrack, db_drop_create_all
+from .models import Student, Teacher, StudentResult, CourseTrack
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from http import HTTPStatus
@@ -12,6 +12,7 @@ from .students import students_namespace
 from .teachers import teachers_namespace
 from dotenv import load_dotenv
 from .config import config_dict
+from .utils import db
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,7 +51,6 @@ def create_app(config=config_dict["dev"]):
             "StudentResult":StudentResult,
             "Teacher": Teacher,
             "CourseTrack": CourseTrack,
-            "db_drop_create_all": db_drop_create_all,
             }
 
     return app
