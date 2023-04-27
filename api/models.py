@@ -1,37 +1,19 @@
 from .utils import db
-from werkzeug.security import generate_password_hash
+from sqlalchemy import create_engine
+import os
+from .config import basedir
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+
+# Base = declarative_base()
+# engine = create_engine("sqlite:///" + os.path.join(basedir, "student.db"), pool_pre_ping=True)
+# Session = sessionmaker(bind=engine)
+# session = Session()
+
 
 
 # Beginning of the Model section
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(200), unique=True, nullable=False)
-    username = db.Column(db.String(200), unique=True, nullable=False)
-    passwordHash = db.Column(db.Text(), nullable=False)
-    user_type = db.Column(db.String(50), nullable=False)
-    # is_admin = db.Column(db.Boolean, default=False)
-
-    students = db.relationship("Student", backref="user_student")
-    teachers = db.relationship("Teacher", backref="user_teacher")
-
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-    
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-    
-    def update(self):
-        db.session.commit()
-    
-    @classmethod
-    def get_by_id(cls, id):
-        return cls.query.get_or_404(id)
-
-
 class Student(db.Model):
     __tablename__ = "students"
     id = db.Column(db.Integer(), primary_key=True)
@@ -142,6 +124,62 @@ class CourseTrack(db.Model):
     def update(self):
         db.session.commit()
 
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)
+    
+
+class Admin(db.Model):
+    __tablename__ = "admin"
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), unique=True, nullable=False)
+    user_id = db.Column(db.ForeignKey("users.id"))
+
+    def __repr__(self):
+        return self.name
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+    
+    def update(self):
+            db.session.commit()
+    
+    @classmethod
+    def get_by_id(cls, id):
+        return cls.query.get_or_404(id)
+
+
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(200), unique=True, nullable=False)
+    username = db.Column(db.String(200), unique=True, nullable=False)
+    passwordHash = db.Column(db.Text(), nullable=False)
+    user_type = db.Column(db.String(50), nullable=False)
+
+    students = db.relationship("Student", backref="user_student")
+    teachers = db.relationship("Teacher", backref="user_teacher")
+    admin = db.relationship("Admin", backref="user_admin")
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+    
+    def update(self):
+        db.session.commit()
+    
     @classmethod
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)

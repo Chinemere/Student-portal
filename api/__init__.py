@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from flask_restx import Api
-from .models import Student, Teacher, StudentResult, CourseTrack
+from .models import Student, Teacher, StudentResult, CourseTrack, Admin
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from http import HTTPStatus
@@ -51,6 +51,7 @@ def create_app(config=config_dict["dev"]):
             "StudentResult":StudentResult,
             "Teacher": Teacher,
             "CourseTrack": CourseTrack,
+            "Admin": Admin,
             }
 
     return app

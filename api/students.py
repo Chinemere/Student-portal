@@ -52,9 +52,9 @@ class GetStudents(Resource):
     @students_namespace.marshal_list_with(student_model, code= 200, envelope='students')
     @jwt_required()
     def get(self):
-        ''' Get all students '''
+        ''' Get all students'''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type == "admin":
             students = Student.query.all()
             return students, HTTPStatus.OK
         abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")

@@ -2,7 +2,7 @@ from http import HTTPStatus
 from flask import request
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_required
 from flask_restx import Resource, abort, fields, Namespace
-from .models import User, Student, Teacher
+from .models import User, Student, Teacher, Admin
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import Conflict, BadRequest
 
@@ -48,9 +48,7 @@ class SignUp(Resource) :
     @auth_namespace.expect(user_model)
     @auth_namespace.doc(params={'name': "Your Name", 'email':'Your email', "username": "Your Username", "password": "Your Password"})
     def post(self):
-        ''' Create an account (Student and Teacher)'''
-        # current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        # if current_user.is_admin:
+        ''' Create an account (Student, Teacher and Admin)'''
         data = request.get_json()
 
         name = data.get('name')
@@ -75,9 +73,12 @@ class SignUp(Resource) :
             elif user_type == "teacher":
                 new_teacher = Teacher(name=name, email=email, user_id=new_user.id)
                 new_teacher.save()
+            elif user_type == "admin":
+                new_admin = Admin(name=name, email=email, user_id=new_user.id)
+                new_admin.save()
                 
             return new_user, HTTPStatus.CREATED
-        abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
+        # abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
             
 
 #Login Routes
