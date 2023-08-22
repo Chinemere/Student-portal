@@ -8,6 +8,8 @@ from werkzeug.exceptions import Conflict, BadRequest
 
 
 
+
+
 auth_namespace = Namespace('Auth', description='namespace for authentication', path='/auth')
 
 login_model = auth_namespace.model(
@@ -55,11 +57,11 @@ class SignUp(Resource) :
         email = data.get('email')
         username = data.get('username')
         password = data.get('password')
-        user_type = data.get("user_type")
+        user_type = data.get("user_type").lower()
 
         email_exist = User.query.filter_by(email=email).first()
         username_exist = User.query.filter_by(username=username).first()
-
+    
         if email_exist:
             abort(HTTPStatus.CONFLICT, "Email already exist")
         elif username_exist:
@@ -103,7 +105,7 @@ class Login(Resource) :
                 'refresh_token': refresh_token
             }
             return response, HTTPStatus.OK
-        raise BadRequest("Invalid Username or password")
+        raise BadRequest("Invalid email or password")
        
 @auth_namespace.route("/refresh")
 class Refresh(Resource):
@@ -125,6 +127,7 @@ class Refresh(Resource):
 class GetUsers(Resource):
     """Get All Users"""
     @auth_namespace.marshal_with(user_model)
+    @jwt_required()
     def get(self):
         users = User.query.all()
         return users, HTTPStatus.OK

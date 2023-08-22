@@ -66,26 +66,30 @@ class SingleStudent(Resource):
     @jwt_required()
     def get(self, id):
         ''' Get A student by ID '''
+        student = Student.query.get_or_404(id)
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
-            student = Student.query.get_or_404(id)
-            return student, HTTPStatus.OK
+        if current_user.user_type=="admin" or current_user.id==student.user_id:
+            return current_user, HTTPStatus.OK
         abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
-    
+        
+
     @students_namespace.expect(update_student_model)
     @students_namespace.marshal_with(student_model, code= 200, envelope='student')
     @jwt_required()
     def put(self, id):
         ''' Update all the information about a student account/datails '''
+        studentToUpdate = Student.query.get_or_404(id)
+        userToUpdate = User.query.get_or_404(studentToUpdate.user_id)
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
-            studentToUpdate = Student.query.get_or_404(id)
+        # check if the current user is an admin or the current user is the owner of the account and not just anybody
+        if current_user.user_type=="admin" or current_user.id==studentToUpdate.user_id:
             data = request.get_json()
-
             studentToUpdate.name = data.get('name')
             studentToUpdate.email = data.get('email')
-
             studentToUpdate.update()
+            userToUpdate.name = data.get('name')
+            userToUpdate.email = data.get('email')
+            userToUpdate.update()
             return studentToUpdate, HTTPStatus.OK
         abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
 
@@ -94,22 +98,25 @@ class SingleStudent(Resource):
     def delete(self, id):
         ''' Delete a student account/datails/record '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             studentToDelete = Student.query.get_or_404(id)
+            UserToDelete = User.query.get_or_404(studentToDelete.user_id)
+
             studentToDelete.delete()
+            UserToDelete.delete()
             return {'message': 'This student record has been deleted'}, 200
         abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
 
 
-@students_namespace.route("/results/student/<int:student_id>/course/<int:course_id>")
-class AddRemoveStudentCourseResult(Resource): 
+@students_namespace.route("/addcourse/student/<int:student_id>/course/<int:course_id>")
+class RegisterAStudent(Resource): 
     @students_namespace.expect(studentResult_model)
     @students_namespace.marshal_with(studentResult_model)
     @jwt_required()
     def post(self, student_id, course_id):
-        ''' Add a Course for Student '''
+        ''' Add a Course for Student/register for a Track '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             student = Student.get_by_id(student_id)
             course = CourseTrack.get_by_id(course_id)
             # checking if student and course id exist
@@ -135,7 +142,7 @@ class AddRemoveStudentCourseResult(Resource):
     def delete(self, student_id, course_id):
         ''' Remove a Course for Student '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             student = Student.get_by_id(student_id)
             course = CourseTrack.get_by_id(course_id)
             student_course = StudentResult.query.filter_by(student_id=student_id, course_id=course_id).first()

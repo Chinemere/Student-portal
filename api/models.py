@@ -129,7 +129,7 @@ class CourseTrack(db.Model):
         return cls.query.get_or_404(id)
     
 
-class Admin(db.Model):
+class Admin( db.Model):
     __tablename__ = "admin"
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(200), nullable=False)

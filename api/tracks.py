@@ -31,11 +31,9 @@ class CreateGetTracks(Resource):
     def get(self):
         
         ''' Get all tracks '''
-        current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
-            tracks = CourseTrack.query.all()
-            return tracks
-        abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
+        tracks = CourseTrack.query.all()
+        return tracks
+
 
 
 
@@ -44,7 +42,7 @@ class CreateGetTracks(Resource):
     def post(self):
         ''' Create a new track '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             data = request.get_json()
             title = data.get('title')
             teacher_id= data.get('teacher_id')
@@ -64,7 +62,7 @@ class GetUpdateDeleteTrack(Resource):
     def get(self, id):
         ''' Get one  track by id '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             track = CourseTrack.query.get_or_404(id)
             return track
         abort(HTTPStatus.UNAUTHORIZED, "Only Admin have access")
@@ -75,7 +73,7 @@ class GetUpdateDeleteTrack(Resource):
     def put(self, id):
         ''' Update all the information about a track '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             TrackToUpdate = CourseTrack.query.get_or_404(id)
             data = request.get_json()
 
@@ -90,7 +88,7 @@ class GetUpdateDeleteTrack(Resource):
     def delete(self, id):
         ''' Delete a track '''
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             TrackToUpdate = CourseTrack.query.get_or_404(id)
             TrackToUpdate.delete()
             return {'message': 'This Track has been deleted'}, 200
@@ -103,7 +101,7 @@ class GetTrackStudents(Resource):
     def get(self, course_id):
         """ Get All STudent in a Track """
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
-        if current_user.is_admin:
+        if current_user.user_type=="admin":
             track = CourseTrack.query.filter_by(course_id = course_id).first()
             if track:
                 courseStudent = Student.query.filter_by(course_id=course_id).first()
